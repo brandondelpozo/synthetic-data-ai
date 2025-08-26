@@ -177,12 +177,23 @@
                         
                         <div class="mb-3">
                             <label for="openai_api_key" class="form-label">OpenAI API Key</label>
-                            <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
-                                   placeholder="sk-...">
-                            <div class="form-text">
-                                Required for AI-enhanced data generation. Only used for fields with "Description for AI".
-                                <a href="https://platform.openai.com/api-keys" target="_blank">Get your API key here</a>
-                            </div>
+                            {% if has_env_api_key %}
+                                <div class="alert alert-success" role="alert">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>API Key Found in .env File!</strong> 
+                                    Using OPENAI_API_KEY from backend configuration. You can leave this field empty.
+                                </div>
+                                <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
+                                       placeholder="Leave empty to use environment variable (optional override)">
+                            {% else %}
+                                <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
+                                       placeholder="sk-..." required>
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Required for AI-enhanced data generation. 
+                                    <a href="https://platform.openai.com/api-keys" target="_blank">Get your API key here</a>
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="mb-3">
