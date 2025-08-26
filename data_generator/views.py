@@ -160,10 +160,15 @@ def dynamic_table_detail(request, table_id):
     table_def = get_object_or_404(DynamicTableDefinition, pk=table_id)
     exports = table_def.exports.all()[:10]
     
+    # Check if OpenAI API key is set in Django settings (from .env file)
+    from django.conf import settings
+    has_env_api_key = bool(getattr(settings, 'OPENAI_API_KEY', ''))
+    
     context = {
         'table_def': table_def,
         'recent_exports': exports,
-        'fields_json': json.dumps(table_def.fields_definition, indent=2)
+        'fields_json': json.dumps(table_def.fields_definition, indent=2),
+        'has_env_api_key': has_env_api_key
     }
     return render(request, 'data_generator/dynamic_table_detail.html', context)
 
@@ -178,6 +183,11 @@ def generate_excel_data(request, table_id):
     
     num_records = int(request.POST.get('num_records', 100))
     openai_api_key = request.POST.get('openai_api_key', '').strip()
+    
+    # If no API key provided in form, try to get from Django settings (.env file)
+    if not openai_api_key:
+        from django.conf import settings
+        openai_api_key = getattr(settings, 'OPENAI_API_KEY', '')
     
     if num_records > 10000:
         messages.error(request, 'Maximum 10,000 records allowed per export')

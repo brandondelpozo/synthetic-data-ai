@@ -297,5 +297,3 @@ dev/
 .env.local
 
 .env_br
-# Environment variables (contains API keys)
-.env
