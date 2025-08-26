@@ -1,0 +1,136 @@
+{% extends 'data_generator/base.html' %}
+
+{% block title %}Dynamic Tables - Synthetic Data AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-table"></i> Dynamic Tables</h2>
+    <a href="{% url 'home' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create New Table
+    </a>
+</div>
+
+{% if page_obj %}
+    <div class="row">
+        {% for table in page_obj %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ table.display_name }}</h5>
+                        {% if table.is_migrated %}
+                            <span class="badge bg-success">Migrated</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2">
+                            <strong>Table:</strong> <code>{{ table.table_name }}</code>
+                        </p>
+                        <p class="text-muted mb-2">{{ table.description|truncatechars:80 }}</p>
+                        
+                        <hr class="my-2">
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-muted">Fields</small><br>
+                                <strong>{{ table.fields_definition|length }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Exports</small><br>
+                                <strong>{{ table.exports.count }}</strong>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-2">
+                        
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> {{ table.created_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'dynamic_table_detail' table.id %}" class="btn btn-outline-primary btn-sm flex-fill">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if table.is_migrated %}
+                                <a href="{% url 'dynamic_table_detail' table.id %}#generate" class="btn btn-outline-success btn-sm flex-fill">
+                                    <i class="fas fa-download"></i> Export
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Table pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+    
+    <!-- Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-primary">{{ page_obj.paginator.count }}</h4>
+                            <small class="text-muted">Total Tables</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success">{{ migrated_count }}</h4>
+                            <small class="text-muted">Migrated Tables</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info">{{ total_exports }}</h4>
+                            <small class="text-muted">Total Exports</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning">{{ total_fields }}</h4>
+                            <small class="text-muted">Total Fields</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-table fa-5x text-muted mb-3"></i>
+        <h3 class="text-muted">No dynamic tables found</h3>
+        <p class="text-muted">Create your first dynamic table to get started with automated data generation.</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Your First Table
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

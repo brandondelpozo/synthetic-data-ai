@@ -1,0 +1,223 @@
+{% extends 'data_generator/base.html' %}
+
+{% block title %}{{ table_def.display_name }} - Dynamic Table{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-table"></i> {{ table_def.display_name }}</h2>
+    <div>
+        <a href="{% url 'dynamic_table_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Tables
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-columns"></i> Table Structure</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Field Name</th>
+                                <th>Data Type</th>
+                                <th>Faker Type</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in table_def.fields_definition %}
+                                <tr>
+                                    <td><code>{{ field.name }}</code></td>
+                                    <td>
+                                        <span class="badge bg-info">{{ field.type|title }}</span>
+                                    </td>
+                                    <td>
+                                        {% if field.options.faker_type %}
+                                            <span class="badge bg-success">{{ field.options.faker_type }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Auto-detect</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% if field.options.max_length %}
+                                                Max: {{ field.options.max_length }}
+                                            {% endif %}
+                                            {% if field.options.min_value %}
+                                                Min: {{ field.options.min_value }}
+                                            {% endif %}
+                                            {% if field.options.max_value %}
+                                                Max: {{ field.options.max_value }}
+                                            {% endif %}
+                                            {% if field.options.choices %}
+                                                Choices: {{ field.options.choices|join:", "|truncatechars:30 }}
+                                            {% endif %}
+                                            {% if field.options.nullable %}
+                                                <span class="badge bg-warning">Nullable</span>
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="table-secondary">
+                                <td><code>id</code></td>
+                                <td><span class="badge bg-primary">AutoField</span></td>
+                                <td><span class="text-muted">N/A</span></td>
+                                <td><small>Primary Key (auto-generated)</small></td>
+                            </tr>
+                            <tr class="table-secondary">
+                                <td><code>created_at</code></td>
+                                <td><span class="badge bg-primary">DateTime</span></td>
+                                <td><span class="text-muted">N/A</span></td>
+                                <td><small>Timestamp (auto-generated)</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% if recent_exports %}
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-download"></i> Recent Exports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Export #</th>
+                                    <th>Records</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for export in recent_exports %}
+                                    <tr>
+                                        <td>#{{ export.id }}</td>
+                                        <td>{{ export.num_records }}</td>
+                                        <td>
+                                            {% if export.status == 'completed' %}
+                                                <span class="badge bg-success">{{ export.get_status_display }}</span>
+                                            {% elif export.status == 'processing' %}
+                                                <span class="badge bg-warning">{{ export.get_status_display }}</span>
+                                            {% elif export.status == 'failed' %}
+                                                <span class="badge bg-danger">{{ export.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ export.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ export.created_at|date:"M d, H:i" }}</td>
+                                        <td>
+                                            {% if export.status == 'completed' %}
+                                                <a href="{% url 'download_excel' export.id %}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info"></i> Table Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Display Name:</strong> {{ table_def.display_name }}</p>
+                <p><strong>Database Table:</strong> <code>{{ table_def.table_name }}</code></p>
+                <p><strong>Description:</strong> {{ table_def.description|default:"No description provided" }}</p>
+                
+                <hr>
+                
+                <p><strong>Created:</strong> {{ table_def.created_at|date:"M d, Y H:i" }}</p>
+                <p><strong>Migration Status:</strong> 
+                    {% if table_def.is_migrated %}
+                        <span class="badge bg-success">Migrated</span>
+                    {% else %}
+                        <span class="badge bg-danger">Not Migrated</span>
+                    {% endif %}
+                </p>
+                {% if table_def.migration_file %}
+                    <p><strong>Migration File:</strong> <code>{{ table_def.migration_file }}</code></p>
+                {% endif %}
+                <p><strong>Total Exports:</strong> {{ table_def.exports.count }}</p>
+            </div>
+        </div>
+        
+        {% if table_def.is_migrated %}
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-excel"></i> Generate Excel Data</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'generate_excel_data' table_def.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="num_records" class="form-label">Number of Records</label>
+                            <input type="number" class="form-control" id="num_records" 
+                                   name="num_records" value="100" min="1" max="10000" required>
+                            <div class="form-text">Maximum 10,000 records per export</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="save_to_db" id="save_to_db">
+                                <label class="form-check-label" for="save_to_db">
+                                    Also save data to database
+                                </label>
+                                <div class="form-text">Data will be inserted into the {{ table_def.table_name }} table</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-magic"></i> Generate & Export Excel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Table Not Migrated</h5>
+                    <p class="text-muted">This table needs to be migrated before you can generate data.</p>
+                    <p class="text-muted">Migration status: {{ table_def.is_migrated }}</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if table_def.fields_definition %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-code"></i> Raw Field Definition (JSON)</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;"><code>{{ fields_json }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

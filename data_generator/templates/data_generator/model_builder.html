@@ -1,0 +1,360 @@
+{% extends 'data_generator/base.html' %}
+
+{% block title %}Dynamic Model Builder{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-magic"></i> Dynamic Model Builder</h2>
+            <a href="{% url 'dynamic_table_list' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> View All Tables
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plus"></i> Create New Dynamic Table</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="dynamicTableForm">
+                            {% csrf_token %}
+                            
+                            <!-- Basic Table Info -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="table_name" class="form-label">Table Name (Database) *</label>
+                                    <input type="text" class="form-control" id="table_name" name="table_name" 
+                                           placeholder="e.g., users, products" required>
+                                    <div class="form-text">Lowercase, no spaces (will be converted automatically)</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="display_name" class="form-label">Display Name *</label>
+                                    <input type="text" class="form-control" id="display_name" name="display_name" 
+                                           placeholder="e.g., User Profiles, Product Catalog" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="2"
+                                          placeholder="Brief description of what this table represents"></textarea>
+                            </div>
+
+                            <!-- Fields Section -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6><i class="fas fa-columns"></i> Table Fields</h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addField()">
+                                        <i class="fas fa-plus"></i> Add Field
+                                    </button>
+                                </div>
+                                
+                                <div id="fields-container">
+                                    <!-- Initial field -->
+                                    <div class="field-group border rounded p-3 mb-3" data-field-index="0">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">Field 1</h6>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeField(this)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Field Name *</label>
+                                                <input type="text" class="form-control" name="field_0_name" 
+                                                       placeholder="e.g., first_name" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Data Type *</label>
+                                                <select class="form-select" name="field_0_type" onchange="showFieldOptions(this, 0)" required>
+                                                    <option value="">Select Type</option>
+                                                    <option value="string">String</option>
+                                                    <option value="text">Text (Long)</option>
+                                                    <option value="number">Number</option>
+                                                    <option value="decimal">Decimal</option>
+                                                    <option value="boolean">Boolean</option>
+                                                    <option value="date">Date</option>
+                                                    <option value="datetime">DateTime</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="url">URL</option>
+                                                    <option value="choice">Choice</option>
+                                                    <option value="list">List</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Faker Type</label>
+                                                <select class="form-select" name="field_0_faker_type">
+                                                    <option value="">Auto-detect</option>
+                                                    <option value="name">Full Name</option>
+                                                    <option value="first_name">First Name</option>
+                                                    <option value="last_name">Last Name</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="phone">Phone</option>
+                                                    <option value="address">Address</option>
+                                                    <option value="city">City</option>
+                                                    <option value="country">Country</option>
+                                                    <option value="company">Company</option>
+                                                    <option value="job">Job Title</option>
+                                                    <option value="sentence">Sentence</option>
+                                                    <option value="paragraph">Paragraph</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Field Options (will be populated based on type) -->
+                                        <div id="field-options-0" class="mt-2"></div>
+
+                                        <div class="mt-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="field_0_nullable" id="field_0_nullable">
+                                                <label class="form-check-label" for="field_0_nullable">
+                                                    Allow null values
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-magic"></i> Create Dynamic Table & Generate Migration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> How it Works</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol class="small">
+                            <li><strong>Define Fields:</strong> Add fields with names and data types</li>
+                            <li><strong>Set Options:</strong> Configure constraints and faker types</li>
+                            <li><strong>Create Table:</strong> Django model and database table are created automatically</li>
+                            <li><strong>Generate Data:</strong> Create synthetic data and export to Excel</li>
+                        </ol>
+
+                        <h6 class="mt-3">Field Types:</h6>
+                        <ul class="small">
+                            <li><code>String</code> - Short text (max length)</li>
+                            <li><code>Text</code> - Long text/paragraphs</li>
+                            <li><code>Number</code> - Integer values</li>
+                            <li><code>Decimal</code> - Decimal numbers</li>
+                            <li><code>Boolean</code> - True/False</li>
+                            <li><code>Date/DateTime</code> - Date values</li>
+                            <li><code>Choice</code> - Select from options</li>
+                            <li><code>List</code> - Array of values (JSON)</li>
+                        </ul>
+
+                        <div class="alert alert-warning mt-3">
+                            <small>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Note:</strong> Table creation is permanent. Make sure your field definitions are correct.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if tables %}
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-table"></i> Recent Tables</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for table in tables|slice:":5" %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ table.display_name }}</strong><br>
+                                    <small class="text-muted">{{ table.table_name }}</small>
+                                </div>
+                                <a href="{% url 'dynamic_table_detail' table.id %}" class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </div>
+                            {% if not forloop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fieldIndex = 1;
+
+function addField() {
+    const container = document.getElementById('fields-container');
+    const fieldGroup = document.createElement('div');
+    fieldGroup.className = 'field-group border rounded p-3 mb-3';
+    fieldGroup.setAttribute('data-field-index', fieldIndex);
+    
+    fieldGroup.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Field ${fieldIndex + 1}</h6>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeField(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Field Name *</label>
+                <input type="text" class="form-control" name="field_${fieldIndex}_name" 
+                       placeholder="e.g., last_name" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Data Type *</label>
+                <select class="form-select" name="field_${fieldIndex}_type" onchange="showFieldOptions(this, ${fieldIndex})" required>
+                    <option value="">Select Type</option>
+                    <option value="string">String</option>
+                    <option value="text">Text (Long)</option>
+                    <option value="number">Number</option>
+                    <option value="decimal">Decimal</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="date">Date</option>
+                    <option value="datetime">DateTime</option>
+                    <option value="email">Email</option>
+                    <option value="url">URL</option>
+                    <option value="choice">Choice</option>
+                    <option value="list">List</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Faker Type</label>
+                <select class="form-select" name="field_${fieldIndex}_faker_type">
+                    <option value="">Auto-detect</option>
+                    <option value="name">Full Name</option>
+                    <option value="first_name">First Name</option>
+                    <option value="last_name">Last Name</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="address">Address</option>
+                    <option value="city">City</option>
+                    <option value="country">Country</option>
+                    <option value="company">Company</option>
+                    <option value="job">Job Title</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="paragraph">Paragraph</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="field-options-${fieldIndex}" class="mt-2"></div>
+        
+        <div class="mt-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="field_${fieldIndex}_nullable" id="field_${fieldIndex}_nullable">
+                <label class="form-check-label" for="field_${fieldIndex}_nullable">
+                    Allow null values
+                </label>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(fieldGroup);
+    fieldIndex++;
+}
+
+function removeField(button) {
+    const fieldGroup = button.closest('.field-group');
+    fieldGroup.remove();
+}
+
+function showFieldOptions(select, index) {
+    const optionsContainer = document.getElementById(`field-options-${index}`);
+    const fieldType = select.value;
+    
+    let optionsHtml = '';
+    
+    if (fieldType === 'string') {
+        optionsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Max Length</label>
+                    <input type="number" class="form-control" name="field_${index}_max_length" 
+                           placeholder="255" value="255">
+                </div>
+            </div>
+        `;
+    } else if (fieldType === 'number') {
+        optionsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Min Value</label>
+                    <input type="number" class="form-control" name="field_${index}_min_value" 
+                           placeholder="1">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Max Value</label>
+                    <input type="number" class="form-control" name="field_${index}_max_value" 
+                           placeholder="1000">
+                </div>
+            </div>
+        `;
+    } else if (fieldType === 'choice') {
+        optionsHtml = `
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">Choices (comma-separated)</label>
+                    <input type="text" class="form-control" name="field_${index}_choices" 
+                           placeholder="Option A, Option B, Option C">
+                </div>
+            </div>
+        `;
+    }
+    
+    optionsContainer.innerHTML = optionsHtml;
+}
+
+// Form submission
+document.getElementById('dynamicTableForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Table...';
+    submitBtn.disabled = true;
+    
+    try {
+        const formData = new FormData(this);
+        const response = await fetch('{% url "create_dynamic_table" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = result.redirect;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = '<i class="fas fa-magic"></i> Create Dynamic Table & Generate Migration';
+        submitBtn.disabled = false;
+    }
+});
+
+// Auto-populate table_name from display_name
+document.getElementById('display_name').addEventListener('input', function(e) {
+    const displayName = e.target.value;
+    const tableName = displayName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+    document.getElementById('table_name').value = tableName;
+});
+</script>
+{% endblock %}

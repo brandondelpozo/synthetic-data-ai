@@ -1,0 +1,142 @@
+{% extends 'data_generator/base.html' %}
+
+{% block title %}Home - Synthetic Data AI{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white rounded p-5 text-center">
+            <h1 class="display-4">
+                <i class="fas fa-magic"></i> Welcome to Synthetic Data AI
+            </h1>
+            <p class="lead">Generate realistic synthetic data for testing, development, and machine learning</p>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+            <p>Create custom data schemas and generate thousands of realistic records in seconds</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <a class="btn btn-light btn-lg mb-2" href="{% url 'schema_create' %}">
+                        <i class="fas fa-plus"></i> Create Schema
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="btn btn-outline-light btn-lg mb-2" href="{% url 'model_builder' %}">
+                        <i class="fas fa-magic"></i> Dynamic Model Builder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card card-stats text-center">
+            <div class="card-body">
+                <i class="fas fa-cog fa-3x mb-3"></i>
+                <h3>{{ schemas_count }}</h3>
+                <p class="mb-0">JSON Schemas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stats text-center">
+            <div class="card-body">
+                <i class="fas fa-table fa-3x mb-3"></i>
+                <h3>{{ dynamic_tables_count }}</h3>
+                <p class="mb-0">Dynamic Tables</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stats text-center">
+            <div class="card-body">
+                <i class="fas fa-play fa-3x mb-3"></i>
+                <h3>{{ generations_count }}</h3>
+                <p class="mb-0">Data Generations</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stats text-center">
+            <div class="card-body">
+                <i class="fas fa-database fa-3x mb-3"></i>
+                <h3>{{ records_count }}</h3>
+                <p class="mb-0">Records Generated</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-rocket"></i> Getting Started</h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li class="mb-2">
+                        <strong>Create a Schema or Dynamic Table</strong><br>
+                        <small class="text-muted">Use JSON schema or the Dynamic Model Builder</small>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Generate Data</strong><br>
+                        <small class="text-muted">Create realistic synthetic data with Faker</small>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Export Results</strong><br>
+                        <small class="text-muted">Download as CSV or Excel files</small>
+                    </li>
+                </ol>
+                <div class="row">
+                    <div class="col-6">
+                        <a href="{% url 'schema_list' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-cog"></i> JSON Schemas
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'model_builder' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-magic"></i> Model Builder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Sample Schema</h5>
+            </div>
+            <div class="card-body">
+                <p>Here's an example of a user profile schema:</p>
+                <pre class="bg-light p-3 rounded"><code>{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string", 
+      "faker": "name"
+    },
+    "email": {
+      "type": "string", 
+      "faker": "email"
+    },
+    "age": {
+      "type": "integer", 
+      "minimum": 18, 
+      "maximum": 80
+    },
+    "city": {
+      "type": "string", 
+      "faker": "city"
+    }
+  }
+}</code></pre>
+                <a href="{% url 'schema_create' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Create Schema
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
