@@ -292,3 +292,8 @@ htmlcov/
 # Local development
 local/
 dev/
+
+# Environment variables
+.env
+.env.local
+.env.*.local

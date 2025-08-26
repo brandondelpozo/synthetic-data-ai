@@ -36,9 +36,25 @@ class AIDataGenerator:
     
     def __init__(self, openai_api_key: str = None):
         """Initialize the AI data generator"""
-        self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
+        if not openai_api_key:
+            # Try to get from Django settings first, then environment
+            try:
+                from django.conf import settings
+                openai_api_key = getattr(settings, 'OPENAI_API_KEY', '')
+            except:
+                pass
+        
+        # Fallback to environment variable (using decouple for .env file support)
+        if not openai_api_key:
+            try:
+                from decouple import config
+                openai_api_key = config('OPENAI_API_KEY', default='')
+            except ImportError:
+                openai_api_key = os.getenv('OPENAI_API_KEY', '')
+        
+        self.openai_api_key = openai_api_key
         if not self.openai_api_key:
-            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass it directly.")
+            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY in .env file or pass it directly.")
         
         # Initialize LangChain components
         self.llm = ChatOpenAI(
