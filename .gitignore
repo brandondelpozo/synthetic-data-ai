@@ -120,7 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+
 .venv
 env/
 venv/
@@ -244,9 +244,8 @@ static/
 media/
 
 # Django Secret Key and Settings
-.env
+
 .env.local
-.env.*.local
 secrets.json
 settings_local.py
 
@@ -294,6 +293,9 @@ local/
 dev/
 
 # Environment variables
-.env
+
 .env.local
-.env.*.local
+
+.env_br
+# Environment variables (contains API keys)
+.env
