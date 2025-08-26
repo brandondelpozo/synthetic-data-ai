@@ -25,7 +25,7 @@
                             <tr>
                                 <th>Field Name</th>
                                 <th>Data Type</th>
-                                <th>Faker Type</th>
+                                <th>AI Description</th>
                                 <th>Options</th>
                             </tr>
                         </thead>
@@ -37,10 +37,10 @@
                                         <span class="badge bg-info">{{ field.type|title }}</span>
                                     </td>
                                     <td>
-                                        {% if field.options.faker_type %}
-                                            <span class="badge bg-success">{{ field.options.faker_type }}</span>
+                                        {% if field.options.ai_description %}
+                                            <small class="text-info">{{ field.options.ai_description|truncatechars:50 }}</small>
                                         {% else %}
-                                            <span class="text-muted">Auto-detect</span>
+                                            <span class="text-muted">Standard generation</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -173,6 +173,16 @@
                             <input type="number" class="form-control" id="num_records" 
                                    name="num_records" value="100" min="1" max="10000" required>
                             <div class="form-text">Maximum 10,000 records per export</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="openai_api_key" class="form-label">OpenAI API Key</label>
+                            <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
+                                   placeholder="sk-...">
+                            <div class="form-text">
+                                Required for AI-enhanced data generation. Only used for fields with "Description for AI".
+                                <a href="https://platform.openai.com/api-keys" target="_blank">Get your API key here</a>
+                            </div>
                         </div>
                         
                         <div class="mb-3">

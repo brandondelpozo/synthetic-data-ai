@@ -15,6 +15,13 @@ import string
 
 fake = Faker()
 
+# Import AI data service
+try:
+    from .ai_data_service import get_ai_generator
+    AI_AVAILABLE = True
+except ImportError:
+    AI_AVAILABLE = False
+
 
 class DynamicModelGenerator:
     """Handle dynamic Django model creation, migration, and data generation"""
@@ -270,10 +277,24 @@ class Migration(migrations.Migration):
             print(f"Unexpected migration error: {error_msg}")
             return False, f"Unexpected error: {error_msg}"
     
-    def generate_synthetic_data(self, table_definition, num_records=100):
+    def generate_synthetic_data(self, table_definition, num_records=100, openai_api_key=None):
         """Generate synthetic data for the dynamic table"""
         table_name = table_definition['table_name']
         fields_definition = table_definition['fields_definition']
+        
+        # Check if AI should be used
+        use_ai = AI_AVAILABLE and openai_api_key and any(
+            field_def.get('options', {}).get('ai_description') 
+            for field_def in fields_definition
+        )
+        
+        ai_generator = None
+        if use_ai:
+            try:
+                ai_generator = get_ai_generator(openai_api_key)
+            except Exception as e:
+                print(f"Failed to initialize AI generator: {e}")
+                use_ai = False
         
         data = []
         for _ in range(num_records):
@@ -282,11 +303,25 @@ class Migration(migrations.Migration):
                 field_name = field_def['name']
                 field_type = field_def['type']
                 options = field_def.get('options', {})
-                faker_type = options.get('faker_type')
+                ai_description = options.get('ai_description')
+                faker_type = options.get('faker_type')  # Keep for backward compatibility
                 
-                record[field_name] = self._generate_field_value(
-                    field_type, field_name, options, faker_type
-                )
+                # Use AI generation if available and description provided
+                if use_ai and ai_description and ai_description.strip():
+                    try:
+                        record[field_name] = ai_generator.generate_field_value(
+                            field_name, field_type, ai_description
+                        )
+                    except Exception as e:
+                        print(f"AI generation failed for {field_name}: {e}, falling back to traditional method")
+                        record[field_name] = self._generate_field_value(
+                            field_type, field_name, options, faker_type
+                        )
+                else:
+                    # Use traditional generation
+                    record[field_name] = self._generate_field_value(
+                        field_type, field_name, options, faker_type
+                    )
             data.append(record)
         
         return data

@@ -24,16 +24,11 @@
                             
                             <!-- Basic Table Info -->
                             <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="table_name" class="form-label">Table Name (Database) *</label>
                                     <input type="text" class="form-control" id="table_name" name="table_name" 
                                            placeholder="e.g., users, products" required>
                                     <div class="form-text">Lowercase, no spaces (will be converted automatically)</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="display_name" class="form-label">Display Name *</label>
-                                    <input type="text" class="form-control" id="display_name" name="display_name" 
-                                           placeholder="e.g., User Profiles, Product Catalog" required>
                                 </div>
                             </div>
                             
@@ -85,24 +80,12 @@
                                                     <option value="list">List</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Faker Type</label>
-                                                <select class="form-select" name="field_0_faker_type">
-                                                    <option value="">Auto-detect</option>
-                                                    <option value="name">Full Name</option>
-                                                    <option value="first_name">First Name</option>
-                                                    <option value="last_name">Last Name</option>
-                                                    <option value="email">Email</option>
-                                                    <option value="phone">Phone</option>
-                                                    <option value="address">Address</option>
-                                                    <option value="city">City</option>
-                                                    <option value="country">Country</option>
-                                                    <option value="company">Company</option>
-                                                    <option value="job">Job Title</option>
-                                                    <option value="sentence">Sentence</option>
-                                                    <option value="paragraph">Paragraph</option>
-                                                </select>
-                                            </div>
+                                                                        <div class="col-md-4">
+                                <label class="form-label">Description for AI</label>
+                                <textarea class="form-control" name="field_0_ai_description" rows="2"
+                                          placeholder="e.g., Ages between 18-65, names from Latin America, phone numbers from Mexico"></textarea>
+                                <div class="form-text">Provide details like age ranges, countries, specific formats, etc.</div>
+                            </div>
                                         </div>
 
                                         <!-- Field Options (will be populated based on type) -->
@@ -234,22 +217,10 @@ function addField() {
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Faker Type</label>
-                <select class="form-select" name="field_${fieldIndex}_faker_type">
-                    <option value="">Auto-detect</option>
-                    <option value="name">Full Name</option>
-                    <option value="first_name">First Name</option>
-                    <option value="last_name">Last Name</option>
-                    <option value="email">Email</option>
-                    <option value="phone">Phone</option>
-                    <option value="address">Address</option>
-                    <option value="city">City</option>
-                    <option value="country">Country</option>
-                    <option value="company">Company</option>
-                    <option value="job">Job Title</option>
-                    <option value="sentence">Sentence</option>
-                    <option value="paragraph">Paragraph</option>
-                </select>
+                <label class="form-label">Description for AI</label>
+                <textarea class="form-control" name="field_${fieldIndex}_ai_description" rows="2"
+                          placeholder="e.g., Ages between 18-65, names from Latin America, phone numbers from Mexico"></textarea>
+                <div class="form-text">Provide details like age ranges, countries, specific formats, etc.</div>
             </div>
         </div>
         
@@ -350,11 +321,10 @@ document.getElementById('dynamicTableForm').addEventListener('submit', async fun
     }
 });
 
-// Auto-populate table_name from display_name
-document.getElementById('display_name').addEventListener('input', function(e) {
-    const displayName = e.target.value;
-    const tableName = displayName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
-    document.getElementById('table_name').value = tableName;
+// Auto-format table_name input
+document.getElementById('table_name').addEventListener('input', function(e) {
+    const tableName = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+    e.target.value = tableName;
 });
 </script>
 {% endblock %}

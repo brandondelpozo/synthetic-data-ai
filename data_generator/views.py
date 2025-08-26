@@ -37,11 +37,11 @@ def create_dynamic_table(request):
     try:
         # Parse form data
         table_name = request.POST.get('table_name', '').lower().replace(' ', '_')
-        display_name = request.POST.get('display_name', '')
+        display_name = table_name.replace('_', ' ').title()  # Generate display name from table name
         description = request.POST.get('description', '')
         
-        if not table_name or not display_name:
-            return JsonResponse({'error': 'Table name and display name are required'}, status=400)
+        if not table_name:
+            return JsonResponse({'error': 'Table name is required'}, status=400)
         
         # Collect field definitions
         fields_definition = []
@@ -81,10 +81,10 @@ def create_dynamic_table(request):
                     choices = [choice.strip() for choice in choices_str.split(',') if choice.strip()]
                     field_def['options']['choices'] = choices
             
-            # Add faker type if specified
-            faker_type = request.POST.get(f'field_{field_index}_faker_type')
-            if faker_type:
-                field_def['options']['faker_type'] = faker_type
+            # Add AI description if specified
+            ai_description = request.POST.get(f'field_{field_index}_ai_description')
+            if ai_description:
+                field_def['options']['ai_description'] = ai_description
             
             # Add nullable option
             nullable = request.POST.get(f'field_{field_index}_nullable') == 'on'
@@ -177,6 +177,7 @@ def generate_excel_data(request, table_id):
         return redirect('dynamic_table_detail', table_id=table_id)
     
     num_records = int(request.POST.get('num_records', 100))
+    openai_api_key = request.POST.get('openai_api_key', '').strip()
     
     if num_records > 10000:
         messages.error(request, 'Maximum 10,000 records allowed per export')
@@ -199,7 +200,7 @@ def generate_excel_data(request, table_id):
             'fields_definition': table_def.fields_definition
         }
         
-        data = generator.generate_synthetic_data(table_definition_data, num_records)
+        data = generator.generate_synthetic_data(table_definition_data, num_records, openai_api_key)
         
         # Create Excel file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
