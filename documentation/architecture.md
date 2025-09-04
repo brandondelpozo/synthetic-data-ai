@@ -9,6 +9,8 @@ En la era del Big Data y el Machine Learning, la **generación de datos sintéti
 
 Los métodos tradicionales de generación de datos de prueba basados en scripts manuales o datos estáticos han demostrado ser **ineficientes, poco realistas y difíciles de mantener**. Estos problemas afectan directamente la calidad del desarrollo de software, la validación de modelos de ML y la capacidad de escalar proyectos de datos.
 
+![Architecture Structure](img/diagrama.jpg)
+
 ### **1.2 Justificación del Proyecto**
 La implementación de una plataforma de generación de datos sintéticos aporta beneficios significativos en múltiples áreas:
 
