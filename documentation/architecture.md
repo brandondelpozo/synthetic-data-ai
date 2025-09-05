@@ -41,6 +41,24 @@ El propósito del sistema es **desarrollar una plataforma web completa** que per
 ### **2.1 Objetivo General**
 Desarrollar una **plataforma web integral de generación de datos sintéticos** que permita crear esquemas de base de datos dinámicos, generar datos realistas con capacidades de IA y exportar resultados en formatos profesionales, mejorando la eficiencia en desarrollo y testing de aplicaciones.
 
+```mermaid
+flowchart LR
+    A[Usuario accede a la plataforma web]
+    B[Define esquema de base de datos dinámico]
+    C[Genera datos sintéticos realistas]
+    D[Utiliza capacidades de IA para generación contextual]
+    E[Valida constraints y formatos]
+    F[Exporta resultados en formatos profesionales Excel, CSV]
+    G[Mejora eficiencia en desarrollo y testing]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+```
+
 ### **2.2 Objetivos Específicos (SMART)**
 
 ```mermaid
@@ -501,356 +519,129 @@ La implementación exitosa de esta plataforma permitirá a los equipos de desarr
 
 ---
 
-## **12. Architecture with Observability and Monitoring**
+## **12. Observability and Monitoring to Continuous Improvement**
 
 Integrating **Firebase Analytics** as the observability solution provides a solid foundation for monitoring and continuous improvement of the **Dynamic Model Builder** system.
 
-### **Technical Benefits:**
-- ✅ **Real-Time Monitoring** of users and system activity
-- ✅ **Complete Tracing** of critical operations
-- ✅ **Business Metrics** aligned with objectives
-- ✅ **Automated Alerts** for performance issues
-- ✅ **User Behavior Analysis** for insights
+### **12.3 Performance Metrics Collection**
 
-### **Practical Implementation:**
-- **Simple Setup**: Easy integration with Firebase SDK
-- **Cost-Effective**: Free plan sufficient for MVP
-- **Scalability**: Grows with application usage
-- **Native Integration**: Works seamlessly with web apps
+```mermaid
+flowchart LR
+    subgraph "User Actions"
+        UA1[Table Creation]
+        UA2[Data Generation]
+        UA3[Export]
+        UA4[Error Event]
+    end
 
-### **12.1 Solución Técnica: Firebase Analytics Integration**
+    UA1 --> PM1[Collect: field_count, duration]
+    UA2 --> PM2[Collect: record_count, method, throughput]
+    UA3 --> PM3[Collect: export_format, time]
+    UA4 --> PM4[Collect: error_type, component]
 
-El sistema implementa **Firebase Analytics** como solución principal de observabilidad, complementado con logging estructurado y métricas de aplicación.
+    PM1 --> FA[Firebase Analytics]
+    PM2 --> FA
+    PM3 --> FA
+    PM4 --> FA
 
-#### **12.1.1 Configuración de Firebase:**
-```python
-# settings.py - Firebase Configuration
-FIREBASE_CONFIG = {
-    'apiKey': config('FIREBASE_API_KEY'),
-    'authDomain': f"{config('FIREBASE_PROJECT_ID')}.firebaseapp.com",
-    'projectId': config('FIREBASE_PROJECT_ID'),
-    'storageBucket': f"{config('FIREBASE_PROJECT_ID')}.appspot.com",
-    'messagingSenderId': config('FIREBASE_MESSAGING_SENDER_ID'),
-    'appId': config('FIREBASE_APP_ID')
-}
+    FA --> D[Dashboard & Alerts]
 ```
 
-#### **12.1.2 Instrumentación en Django:**
-```python
-# middleware.py - Firebase Analytics Middleware
-class FirebaseAnalyticsMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-        
-    def __call__(self, request):
-        # Track page views
-        analytics.log_event('page_view', {
-            'page_title': request.path,
-            'page_location': request.build_absolute_uri(),
-            'user_agent': request.META.get('HTTP_USER_AGENT')
-        })
-        
-        response = self.get_response(request)
-        
-        # Track response metrics
-        analytics.log_event('api_response', {
-            'endpoint': request.path,
-            'method': request.method,
-            'status_code': response.status_code,
-            'response_time': getattr(response, 'response_time', 0)
-        })
-        
-        return response
+### **12.6 Observability Dashboard Structure**
+
+```mermaid
+mindmap
+  root((Observability Dashboard))
+    Key Metrics
+      Table Creation Count
+      Data Generation Count
+      Avg Generation Time
+      Error Rate
+      User Engagement Time
+      Feature Adoption Rate
+    User Segments
+      Power Users (>10 tables)
+      AI Users (uses AI features)
+      Frequent Generators (>1000 records)
+      Testers (testing use)
+    Alerts
+      High Creation Time
+      High Error Rate
+      System Performance Issues
 ```
 
-### **12.2 Logs del Sistema**
+### **12.7 Automated Alerts and Monitoring**
 
-#### **12.2.1 Logs de Aplicación:**
-```python
-# logging.py - Structured Logging Configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'structured': {
-            'format': '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "service": "dynamic-model-builder", "message": "%(message)s", "user_id": "%(user_id)s", "operation": "%(operation)s", "duration": "%(duration)s"}'
-        }
-    },
-    'handlers': {
-        'firebase': {
-            'class': 'dynamic_model_builder.logging.FirebaseLogHandler',
-            'formatter': 'structured',
-            'level': 'INFO'
-        }
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['firebase'],
-            'level': 'INFO',
-            'propagate': False
-        },
-        'data_generator': {
-            'handlers': ['firebase'],
-            'level': 'INFO',
-            'propagate': False
-        }
-    }
-}
+```mermaid
+flowchart TD
+    M1[Monitor Metrics]
+    M1 --> C1{Threshold Exceeded?}
+    C1 -- Yes --> A1[Send Alert Firebase]
+    C1 -- No --> M1
+    A1 --> D1[Dashboard Notification]
 ```
 
-#### **12.2.2 Eventos de Log Específicos:**
-```python
-# Ejemplos de logs estructurados
-logger.info("Table creation started", extra={
-    'user_id': request.user.id,
-    'operation': 'create_table',
-    'table_name': table_name,
-    'field_count': len(fields_definition)
-})
 
-logger.info("Data generation completed", extra={
-    'user_id': request.user.id,
-    'operation': 'generate_data',
-    'table_name': table_name,
-    'record_count': num_records,
-    'duration': generation_time,
-    'ai_used': openai_api_key is not None
-})
+## **12. Horizontal Scalation with Distributed Systems Architecture Integration**
 
-logger.error("Migration failed", extra={
-    'user_id': request.user.id,
-    'operation': 'migration',
-    'table_name': table_name,
-    'error_type': type(e).__name__,
-    'error_message': str(e)
-})
+This section integrates advanced distributed systems patterns to ensure the **Dynamic Model Builder** can handle increased load and provide high availability.
+
+#### **Load Balancing Architecture:**
+Monolithic application is transformed into a distributed system with a load balancer distributing requests to multiple worker nodes.
+
+Turn on it when the system needs to handle high traffic or large data generation requests.
+
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        C1[Client 1]
+        C2[Client 2]
+        C3[Client 3]
+    end
+
+    subgraph "Load Balancer"
+        LB[Load Balancer<br/>Strategy Engine]
+    end
+
+    subgraph "Worker Pool"
+        W1[Worker 1<br/>Load: 30%]
+        W2[Worker 2<br/>Load: 45%]
+        W3[Worker 3<br/>Load: 20%]
+        W4[Worker 4<br/>Load: 60%]
+    end
+
+    subgraph "Backend Services"
+        BS1[Data Generation<br/>Service 1]
+        BS2[Data Generation<br/>Service 2]
+        BS3[Data Generation<br/>Service 3]
+        BS4[Data Generation<br/>Service 4]
+    end
+
+    C1 --> LB
+    C2 --> LB
+    C3 --> LB
+
+    LB --> W1
+    LB --> W2
+    LB --> W3
+    LB --> W4
+
+    W1 --> BS1
+    W2 --> BS2
+    W3 --> BS3
+    W4 --> BS4
+
+    style LB fill:#2196F3,color:#fff
+    style W1 fill:#4CAF50
+    style W2 fill:#FF9800
+    style W3 fill:#4CAF50
+    style W4 fill:#F44336
 ```
 
-### **12.3 Métricas de Rendimiento**
+## **13. Upgrade Architecture to Microservices on AWS Cloud-Native**
 
-#### **12.3.1 Métricas de Usuario (Firebase Analytics):**
-```javascript
-// Firebase Analytics Events
-// Table Creation Events
-firebase.analytics().logEvent('table_created', {
-  table_name: tableName,
-  field_count: fields.length,
-  has_ai_description: fields.some(f => f.ai_description),
-  creation_time: performance.now()
-});
-
-// Data Generation Events
-firebase.analytics().logEvent('data_generated', {
-  table_name: tableName,
-  record_count: numRecords,
-  generation_method: aiEnabled ? 'ai' : 'faker',
-  export_format: 'excel',
-  generation_time: endTime - startTime
-});
-
-// Error Events
-firebase.analytics().logEvent('error_occurred', {
-  error_type: error.name,
-  error_message: error.message,
-  component: 'data_generator',
-  user_action: currentAction
-});
-```
-
-#### **12.3.2 Métricas de Sistema (Custom):**
-```python
-# metrics.py - System Metrics
-class SystemMetrics:
-    @staticmethod
-    def record_table_creation_metrics(table_name, field_count, duration):
-        analytics.log_event('table_creation_metrics', {
-            'table_name': table_name,
-            'field_count': field_count,
-            'duration_ms': duration,
-            'timestamp': datetime.now().isoformat()
-        })
-    
-    @staticmethod
-    def record_data_generation_metrics(table_name, record_count, method, duration):
-        analytics.log_event('data_generation_metrics', {
-            'table_name': table_name,
-            'record_count': record_count,
-            'generation_method': method,
-            'duration_ms': duration,
-            'throughput': record_count / (duration / 1000),  # records per second
-            'timestamp': datetime.now().isoformat()
-        })
-    
-    @staticmethod
-    def record_error_metrics(error_type, component, user_id=None):
-        analytics.log_event('error_metrics', {
-            'error_type': error_type,
-            'component': component,
-            'user_id': user_id,
-            'timestamp': datetime.now().isoformat()
-        })
-```
-
-### **12.4 Tracing y Seguimiento**
-
-#### **12.4.1 Tracing de Solicitudes:**
-```python
-# tracing.py - Request Tracing
-class RequestTracer:
-    def __init__(self, request):
-        self.request = request
-        self.trace_id = str(uuid.uuid4())
-        self.start_time = time.time()
-        
-    def start_operation(self, operation_name):
-        analytics.log_event('operation_started', {
-            'trace_id': self.trace_id,
-            'operation': operation_name,
-            'user_id': getattr(self.request.user, 'id', None),
-            'timestamp': datetime.now().isoformat()
-        })
-    
-    def end_operation(self, operation_name, success=True, error=None):
-        duration = (time.time() - self.start_time) * 1000  # ms
-        
-        analytics.log_event('operation_completed', {
-            'trace_id': self.trace_id,
-            'operation': operation_name,
-            'duration_ms': duration,
-            'success': success,
-            'error_type': type(error).__name__ if error else None,
-            'error_message': str(error) if error else None,
-            'timestamp': datetime.now().isoformat()
-        })
-```
-
-#### **12.4.2 Tracing de IA (LangGraph):**
-```python
-# ai_tracing.py - AI Workflow Tracing
-class AITracer:
-    def trace_ai_workflow(self, field_name, field_type, ai_description):
-        trace_id = str(uuid.uuid4())
-        
-        # Trace AI analysis phase
-        analytics.log_event('ai_analysis_started', {
-            'trace_id': trace_id,
-            'field_name': field_name,
-            'field_type': field_type,
-            'description_length': len(ai_description)
-        })
-        
-        # Trace generation phase
-        analytics.log_event('ai_generation_started', {
-            'trace_id': trace_id,
-            'field_name': field_name
-        })
-        
-        # Trace validation phase
-        analytics.log_event('ai_validation_completed', {
-            'trace_id': trace_id,
-            'field_name': field_name,
-            'validation_success': True
-        })
-        
-        return trace_id
-```
-
-### **12.5 Dashboard de Observabilidad**
-
-#### **12.5.1 Firebase Analytics Dashboard:**
-```javascript
-// Firebase Analytics Custom Dashboard
-// Key metrics to track:
-const keyMetrics = [
-    'table_creation_count',
-    'data_generation_count', 
-    'average_generation_time',
-    'error_rate',
-    'user_engagement_time',
-    'feature_adoption_rate'
-];
-
-// Custom audiences
-const userSegments = [
-    'power_users',      // > 10 tables created
-    'ai_users',         // Uses AI features
-    'frequent_generators', // > 1000 records generated
-    'testers'          // Uses for testing purposes
-];
-```
-
-#### **12.5.2 Métricas de Negocio:**
-```python
-# business_metrics.py
-class BusinessMetrics:
-    def track_user_journey(self, user_id, action, metadata=None):
-        """Track complete user journey"""
-        analytics.log_event('user_journey', {
-            'user_id': user_id,
-            'action': action,
-            'step_number': self.get_journey_step(action),
-            'metadata': metadata or {},
-            'timestamp': datetime.now().isoformat()
-        })
-    
-    def track_feature_usage(self, user_id, feature_name, usage_count=1):
-        """Track feature adoption and usage"""
-        analytics.log_event('feature_usage', {
-            'user_id': user_id,
-            'feature': feature_name,
-            'usage_count': usage_count,
-            'timestamp': datetime.now().isoformat()
-        })
-    
-    def track_business_value(self, user_id, action_type, value_generated):
-        """Track business impact metrics"""
-        analytics.log_event('business_value', {
-            'user_id': user_id,
-            'action_type': action_type,
-            'value_generated': value_generated,
-            'timestamp': datetime.now().isoformat()
-        })
-```
-
-### **12.6 Alertas y Monitoreo**
-
-#### **12.6.1 Alertas Automáticas:**
-```python
-# alerts.py - Automated Alerts
-class AlertManager:
-    def check_performance_thresholds(self):
-        """Check if performance metrics exceed thresholds"""
-        # Check table creation time
-        if self.get_average_creation_time() > 30000:  # 30 seconds
-            self.send_alert('high_creation_time', {
-                'current_avg': self.get_average_creation_time(),
-                'threshold': 30000
-            })
-        
-        # Check error rate
-        if self.get_error_rate() > 0.05:  # 5%
-            self.send_alert('high_error_rate', {
-                'current_rate': self.get_error_rate(),
-                'threshold': 0.05
-            })
-    
-    def send_alert(self, alert_type, data):
-        """Send alert through Firebase"""
-        analytics.log_event('system_alert', {
-            'alert_type': alert_type,
-            'severity': self.get_alert_severity(alert_type),
-            'data': data,
-            'timestamp': datetime.now().isoformat()
-        })
-```
-
----
-
-## **14. Arquitectura de Calidad y Evaluación**
-
-### **14.1 Principios Arquitectónicos Fundamentales**
-
-Following the principles of **Grady Booch**, the architect establishes that a "good" architecture must align with the following core elements:
+### **13.1 Aspects to Consider for Apply the next Architecture**
 
 ```mermaid
 mindmap
@@ -873,11 +664,11 @@ mindmap
       Living documentation
 ```
 
-### **14.2 Atributos de Calidad Priorizados**
+### **14.2 Focus on Quality Attributes**
 
 #### **Quality Matrix for Dynamic Model Builder:**
 
-The architect prioritizes quality attributes based on the system's requirements, ensuring that critical aspects like performance and availability receive the highest focus.
+The new architect prioritizes quality attributes based on the system's requirements, ensuring that critical aspects like performance and availability receive the highest focus.
 
 | **Attribute** | **Priority** | **Architectural Metrics** | **Application to Project** |
 |-------------|---------------|-------------------------------|---------------------------|
@@ -888,13 +679,9 @@ The architect prioritizes quality attributes based on the system's requirements,
 | **Usability** | Medium | Learnability, Efficiency | Onboarding < 30min |
 | **Interoperability** | Medium | APIs, Standards | RESTful APIs, OpenAPI |
 
-### **14.3 Métodos de Evaluación Arquitectónica**
-
-The architect applies established methods to evaluate the architecture systematically.
-
 #### **14.3.1 ATAM (Architecture Tradeoff Analysis Method)**
 
-**Escenarios Críticos Evaluados:**
+**Escenarios Críticos para evaluar aplicat una nueva arquitectura:**
 
 ```mermaid
 flowchart TD
@@ -1125,75 +912,74 @@ gantt
 
 ---
 
-## **15. Integrated Architectural Conclusion**
+## **15. Migrate to Microservices on AWS Cloud-Native Architecture**
 
-The architect concludes that the integration of architectural principles with AWS cloud-native services provides a robust foundation for the **Dynamic Model Builder**, combining best practices in architectural evaluation with cloud scalability and reliability.
+The architect concludes with a practical migration guide: how to move the current monolithic Django-based Dynamic Model Builder to a microservices, AWS cloud-native architecture while preserving the same quality attributes and evaluation context described earlier.
 
-### **15.1 Prioritized Quality Attributes for Dynamic Model Builder**
+Below we keep the same graphs and quality context but annotate each item with the concrete AWS services, migration actions and verification steps required to execute a safe, incremental migration.
 
-Based on architectural evaluation principles, the architect identifies the most critical quality attributes for the system.
+### **15.1 Prioritized Quality Attributes for Dynamic Model Builder (annotated for AWS migration)**
+
+Based on the same evaluation, this section maps each quality attribute to target AWS primitives and short migration actions.
 
 ```mermaid
 flowchart TD
     A[Dynamic Model Builder] --> B[Performance]
-    A --> C[Availability] 
+    A --> C[Availability]
     A --> D[Security]
     A --> E[Testability]
     A --> F[Usability]
-    
+
     B --> B1[Latency < 30s]
     B --> B2[Throughput > 1000 regs/s]
     B --> B3[Horizontal scalability]
-    
+
     C --> C1[99.9% uptime]
     C --> C2[MTTR < 1h]
     C --> C3[Auto-recovery]
-    
+
     D --> D1[Input validation]
     D --> D2[CSRF protection]
     D --> D3[Secure file handling]
-    
+
     E --> E1[Test coverage > 80%]
     E --> E2[Automated testing]
     E --> E3[CI/CD integration]
-    
+
     F --> F1[Intuitive UI]
     F --> F2[No technical knowledge required]
     F --> F3[Responsive design]
-    
-    classDef critical fill:#ff6b6b,color:#fff
-    classDef important fill:#ffd93d,color:#000
-    classDef standard fill:#6bcf7f,color:#fff
-    
-    class B,C critical
-    class D,E important
-    class F standard
 ```
 
-### **15.2 Architectural Evaluation with ATAM**
+Mapping notes (how each node maps to AWS during migration):
+- Performance (B): API Gateway + ALB, ECS Fargate / EKS for services, ElastiCache (Redis) for caching, RDS (Postgres) read replicas for heavy reads.
+- Availability (C): Multi-AZ RDS, ECS with ALB + Auto Scaling, Route53 health checks, CloudWatch alarms and AWS Backup for recovery.
+- Security (D): AWS IAM + least-privilege roles, AWS WAF, Secrets Manager / Parameter Store, S3 for safe file storage with SSE.
+- Testability (E): CodeBuild/CodePipeline for CI, CodeDeploy or GitHub Actions for deployments, X-Ray + CloudWatch Logs for observability and automated integration tests.
+- Usability (F): CloudFront + S3 for static assets, Cognito for auth (or existing Django auth behind a service), and gradual frontend decoupling behind APIs.
 
-The architect applies the ATAM method to evaluate critical quality scenarios.
+### **15.2 Architectural Evaluation with ATAM — migration-focused scenarios**
 
-#### **Critical Quality Scenarios:**
+Keep the original critical scenarios, but add AWS migration responses and fallback patterns.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Scenario1
     [*] --> Scenario2
     [*] --> Scenario3
-    
+
     Scenario1: User generates 10k records with AI
     Scenario1 --> Stimulus1: High processing load
     Stimulus1 --> Environment1: Multi-user production
     Environment1 --> Response1: Time < 30s
     Response1 --> Quality1: Performance
-    
+
     Scenario2: OpenAI API failure
     Scenario2 --> Stimulus2: External service down
     Stimulus2 --> Environment2: Third-party dependency
     Environment2 --> Response2: Automatic fallback
     Response2 --> Quality2: Availability
-    
+
     Scenario3: Malicious SQL injection input
     Scenario3 --> Stimulus3: Security attack
     Stimulus3 --> Environment3: Public web app
@@ -1201,51 +987,41 @@ stateDiagram-v2
     Response3 --> Quality3: Security
 ```
 
-#### **Identified Architectural Trade-offs:**
+Migration reactions and AWS patterns:
+- High processing load: offload heavy generation to asynchronous workers (ECS/EKS tasks or Lambda for small units) behind SQS/EventBridge. Use autoscaling policies (Target Tracking) and provisioned concurrency for critical Lambdas.
+- Third-party API failures: implement Circuit Breaker and retry patterns using Step Functions or custom middleware; mirror critical prompt templates in S3 and provide degraded local generators (Faker) when OpenAI is unavailable.
+- Security attacks: terminate risky inputs at API Gateway / WAF level, enforce input sanitization in each service, centralize audit logs in CloudWatch Logs + Athena for forensic queries.
 
-| **Architectural Decision** | **Benefit** | **Trade-off** | **AWS Mitigation** |
-|----------------------------|---------------|---------------|-------------------|
-| **Microservices vs Monolith** | Independent scalability | Operational complexity | ECS Fargate + Service Mesh |
-| **SQL vs NoSQL** | Data consistency | Performance in complex queries | PostgreSQL + Read Replicas |
-| **Aggressive caching** | Better performance | Data staleness risk | Redis + Cache invalidation |
-| **Serverless vs EC2** | Variable cost | Cold starts | Provisioned concurrency |
+#### Identified Trade-offs (migration-centric)
 
-### **15.3 Applied Design Best Practices**
+| Decision | Migration Benefit | Trade-off during migration | AWS Mitigation |
+|---|---:|---|---|
+| Break monolith into microservices | Independent scaling and faster releases | Increased operational surface and SRE burden during migration | Start with containerized monolith on ECS Fargate, add service mesh (App Mesh) and progressive traffic shifting |
+| Centralized SQL DB -> distributed services | Maintain data consistency | Cross-service transactions complexity | Use RDS (Postgres) + read replicas; implement saga patterns and DynamoDB for specific event-sourced pieces |
+| Aggressive caching | Lower latency | Risk of stale data across services | Use ElastiCache + consistent cache invalidation via events (EventBridge/SNS) |
+| Serverless for bursty workloads | Cost effective and auto-scaling | Cold start / operational difference | Use provisioned concurrency, Lambda@s, and containerized workers for steady workloads |
 
-The architect incorporates best design practices to ensure system robustness.
+### **15.3 Applied Design Best Practices — migration checklist**
 
-#### **Architectural Design Principles:**
+Use the same principles but add concrete migration contracts:
+- Modularity: define service boundaries (API surface, data ownership), small set of bounded contexts to extract first (e.g., Model Definition service, Data Generation service, Export service).
+- Scalability: design each service to scale independently with autoscaling groups or Fargate task scaling rules.
+- Availability: use Multi-AZ deployments and stateless services with externalized sessions (DynamoDB or ElastiCache).
+- Security: apply least-privilege IAM roles per service, use KMS for encryption, enable AWS WAF and Shield where public endpoints exist.
+- Testability: create a CI pipeline per service with unit, integration and contract tests.
 
-```mermaid
-mindmap
-  root((Architectural Design))
-    Modularity
-      Separation of responsibilities
-      Clear encapsulation
-      Well-defined interfaces
-    Scalability
-      Horizontal auto-scaling
-      Intelligent load balancing
-      Resource optimization
-    Availability
-      Multiple redundancy
-      Automatic failover
-      Proactive health checks
-    Security
-      Defense in depth
-      Least privilege
-      Input validation
-    Testability
-      Design for testing
-      Automated coverage
-      Integrated CI/CD
-```
+Tiny contract example (Data Generation service):
+- Inputs: Table definition ID, record count, optional AI prompt.
+- Outputs: S3 path to generated file / DB insert confirmations.
+- Errors: Retries on transient failures, poison queue handling to Dead Letter Queue (DLQ).
 
-### **15.4 Architectural Quality Metrics**
+### **15.4 Architectural Quality Metrics — AWS instrumentation**
 
-The architect designs a dashboard for monitoring architectural quality metrics.
-
-#### **Architectural Metrics Dashboard:**
+The dashboard stays the same; implementations change to AWS telemetry:
+- Response time & throughput: CloudWatch metrics for API Gateway/ALB and ECS/EKS service metrics.
+- Error rate & auto-recovery: CloudWatch Alarms + EventBridge to trigger auto-remediation (e.g., scale up, restart tasks).
+- Security: AWS Config, GuardDuty, CloudTrail logs aggregated to CloudWatch and analyzed by Athena/QuickSight.
+- Testability: CodeBuild reports and CodePipeline success rate.
 
 ```mermaid
 flowchart LR
@@ -1272,7 +1048,7 @@ flowchart LR
         T2[Automated tests > 90%]
         T3[CI/CD success rate > 95%]
     end
-    
+
     P1 --> M[Quality Score]
     P2 --> M
     P3 --> M
@@ -1285,64 +1061,60 @@ flowchart LR
     T1 --> M
     T2 --> M
     T3 --> M
-    
+
     M --> R[Architecture Health]
-    
-    classDef excellent fill:#4CAF50,color:#fff
-    classDef good fill:#FFC107,color:#000
-    classDef needs_improvement fill:#FF5722,color:#fff
-    
-    class M excellent
-    class R excellent
 ```
 
-### **15.5 Implementation Recommendations**
+### **15.5 Step-by-step Migration Plan (Monolith -> Microservices on AWS)**
 
-The architect provides phased implementation recommendations.
+Phase A — Prepare and Stabilize (weeks 0–2)
+- Inventory: catalog Django views, models, DB tables and export workflows; identify bounded contexts (ModelDefinition, Generation, Export, Admin).
+- Containerize: package current monolith as a Docker image and deploy to ECS Fargate behind an Application Load Balancer (ALB). This provides a low-risk lift-and-shift.
+- Observability baseline: enable CloudWatch Logs, X-Ray tracing, and basic metrics for the containerized monolith.
 
-#### **Phase 1: Foundation (Immediate)**
-- ✅ Implement modularity principles
-- ✅ Configure basic quality metrics
-- ✅ Establish performance baseline
+Phase B — Extract First Services (weeks 3–10)
+- Extract Data Generation service: implement as an independent service (container or Lambda) that reads table definitions from RDS and writes generated artifacts to S3. Use SQS or EventBridge for generation requests.
+- Extract Export service: handle Excel formatting and storage — move file writes to S3, and use presigned URLs for downloads through API Gateway/ALB.
+- Implement Auth boundary: front the API with Cognito or a dedicated Auth service; switch monolith traffic gradually via path-based routing on ALB or API Gateway.
 
-#### **Phase 2: Optimization (3 months)**
-- ✅ Apply scalability patterns
-- ✅ Implement security hardening
-- ✅ Automate testing pipeline
+Phase C — Data and State Migration (weeks 8–14)
+- Schema ownership: migrate table ownership incrementally. Keep a single RDS Postgres for transactional data initially, add read replicas for scaling reads.
+- Event-driven integration: add SNS/EventBridge topics to propagate changes (table created, export ready) between services; adopt idempotent consumer patterns.
+- Long-term: consider moving immutable, high-throughput datasets to DynamoDB or partitioned Postgres schemas to reduce cross-service coupling.
 
-#### **Phase 3: Excellence (6 months)**
-- ✅ Achieve enterprise metrics
-- ✅ Implement complete observability
-- ✅ Establish continuous evaluation
+Phase D — Harden, Automate, and Optimize (weeks 12–20)
+- CI/CD: create a CodePipeline per service, with automated tests and canary/deployment strategies via CodeDeploy or ECS rolling updates.
+- Observability: centralize logs in CloudWatch, add X-Ray traces, and QuickSight dashboards for the architectural metrics.
+- Resilience: add SQS DLQs, Step Functions for multi-step generation workflows, and circuit-breakers around external AI providers.
 
-### **Integrated Architectural Benefits:**
+Phase E — Complete Microservices and Cost Optimization (months 6+)
+- Replace the containerized monolith with a composition of microservices behind API Gateway and App Mesh for service-to-service observability.
+- Optimize: use Spot/Graviton EC2 or Fargate savings plans for cost; introduce RDS read-replicas and ElastiCache to hit targets.
+- Governance: apply AWS Organizations, Service Control Policies and automated IaC (CloudFormation / CDK / Terraform) for reproducible environments.
 
-The architect highlights the integrated benefits of the architectural approach.
+Quick verification checks for each phase:
+- Smoke test endpoints, measure latency and throughput in CloudWatch.
+- Integration tests for event contracts between services.
+- Security scan (IAM, WAF rules) and automated backups verified.
 
-#### **15.6 System Quality:**
-- ✅ **Systematic Evaluation** with ATAM, CBAM and SAAM
-- ✅ **Prioritized Quality Attributes** according to business needs
-- ✅ **Evolutionary Architecture** from initial EC2 to complete serverless
-- ✅ **Continuous Monitoring** of quality metrics
+### **15.6 Integrated Architectural Benefits (post-migration)**
 
-#### **15.7 Operational Efficiency:**
-- ✅ **AWS Well-Architected Framework** as best practices guide
-- ✅ **Gradual Migration** with measurable ROI in each phase
-- ✅ **Complete Automation** with IaC and CI/CD
-- ✅ **Cost Optimization** with managed services
+- System Quality: scalable services, independent release cadence, better fault isolation.
+- Operational Efficiency: automated CI/CD, infra-as-code, and managed services reduce operational toil.
+- Scalability & Reliability: auto-scaling, Multi-AZ RDS and ElastiCache provide the required capacity and redundancy.
 
-#### **15.8 Scalability and Reliability:**
-- ✅ **Auto-scaling** based on real demand
-- ✅ **Multi-AZ Deployment** for high availability
-- ✅ **Automated Disaster Recovery**
-- ✅ **Performance Optimization** with CDN and caching
+### **15.7 Minimal Risk Rollout Strategy**
 
-### **Strategic Implementation:**
+- Parallel run: keep monolith running while migrating features gradually. Use feature flags and path-based routing to divert a percentage of traffic to new services.
+- Backout plan: each change must include an automated rollback path in CodePipeline and health checks that revert traffic on failure.
+- Data safety: snapshot RDS before schema changes, use transactional migrations with backward-compatible columns and feature toggles for consumers.
 
-The architect emphasizes that the resulting architecture combines solid architectural evaluation principles with AWS cloud-native services, enabling the **Dynamic Model Builder** to evolve from an initial EC2-based solution to a fully scalable and reliable enterprise platform.
+### **15.8 Closing: how the graphs map to the final AWS topology**
 
----
+- The quality attribute graph remains the contract (what we need to achieve). Implementation maps to AWS building blocks:
+  - Performance/Throughput -> ALB/API Gateway + ECS/EKS + ElastiCache + RDS read replicas.
+  - Availability/Recovery -> Multi-AZ RDS, Auto Scaling, CloudWatch Alarms, Route53 health checks.
+  - Security -> IAM, KMS, Secrets Manager, WAF, CloudTrail.
+  - Testability -> CodeBuild, CodePipeline, X-Ray, CloudWatch metrics.
 
-*Documento actualizado el: 31 de agosto de 2025*
-*Versión: 1.4 - Arquitectura Concisa y Profesional*
-*Autor: Sistema de Análisis Arquitectónico*
+This section should serve as the operational plan for moving from the current EC2/containerized monolith into an AWS microservices architecture while keeping the original evaluation criteria and diagrams as the migration contract and verification targets.
