@@ -339,6 +339,12 @@ class AIDataGenerator:
 _ai_generator = None
 
 
+def clear_ai_generator_cache():
+    """Clear the cached AI generator instance to force reload with new API key"""
+    global _ai_generator
+    _ai_generator = None
+
+
 def get_ai_generator(openai_api_key: str = None) -> AIDataGenerator:
     """Get or create AI generator instance"""
     global _ai_generator

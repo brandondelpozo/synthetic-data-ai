@@ -297,3 +297,4 @@ dev/
 .env.local
 
 .env_br
+.env
