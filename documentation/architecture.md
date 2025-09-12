@@ -73,7 +73,13 @@ gantt
     Crear interfaz web intuitiva sin requerir conocimientos técnicos :active, ui, 2025-09-01, 90d
     section Arquitectura Modular
     Desarrollar arquitectura modular extensible para nuevos tipos de datos :active, modular, 2025-09-01, 120d
+
 ```
+
+### Notas de mejora: Objetivos más objetivos
+- Revisar los objetivos específicos para que sean medibles y acotados: por ejemplo, "Soportar generación contextual con IA para 5 países (incluyendo reglas locales)" o "Reducir tiempo de preparación de datos para QA en 50% en 3 meses".
+- Recomendar convertir cada objetivo en SMART (Specific, Measurable, Achievable, Relevant, Time-bound).
+
 ---
 
 ## **3. Arquitectura del Sistema**
@@ -122,6 +128,16 @@ El sistema implementa una **arquitectura MVC (Model-View-Controller) con Service
 - **ORM**: Django ORM con SQLite (configurable)
 - **Dynamic Tables**: Tablas creadas dinámicamente por usuarios
 - **Metadata Storage**: Almacenamiento de definiciones y exportaciones
+ - **User Preferences & History**: Considerar almacenar preferencias e historial de generación en S3 (u otro object store) para reducir llamadas a modelos de IA y costos asociados. Guardar prompts, tokens usados por sesión y caché de respuestas permite reusar resultados y ofrecer presets personalizables.
+
+```mermaid
+flowchart LR
+    UI[Interfaz Web] -->|Guarda presets| S3[S3 / Object Store]
+    S3 -->|Presets & history| CACHE[Cache local / CDN]
+    CACHE -->|Reduce llamadas| AIGEN[Generador IA - OpenAI / Local]
+    AIGEN --> EX[Exportador Excel]
+    style S3 fill:#F3F4F6,stroke:#333
+```
 
 ### **3.3 Arquitectura de Generación Dinámica**
 
@@ -146,6 +162,40 @@ flowchart LR
     A --> G[Generate]
     G --> V[Validate]
     V --> O[Output]
+```
+
+#### Consideraciones operativas de IA
+- Costes por token: muchos proveedores (por ejemplo OpenAI) cobran por token; estimar la "cantidad de generación por token" es crítico para dimensionar coste por dataset y optimizar prompts. Definir métricas simples: tokens por registro generado, tokens por petición y coste estimado por exportación. Estas métricas sirven para decidir fallbacks y límites operativos.
+- Prototipo con OpenAI: usar OpenAI en el prototipo es útil para validar el concepto rápidamente y evidenciar la necesidad del producto antes de invertir en alternativas más cost-eficientes.
+- Modelos locales y fine-tuning: evaluar la opción de correr modelos LLM en el cliente o en infraestructura propia para reducir dependencia de APIs externas. Considerar fine-tuning de modelos pequeños o entrenamiento auto-supervisado y validar resultados frente a OpenAI como referencia.
+
+#### Estimación simple de costes por token (guía rápida)
+- Definir "tokens por registro" como la media de tokens consumidos para generar una fila de datos. Multiplicar por número de registros para obtener tokens por exportación.
+- Calcular coste estimado = tokens_por_exportación * coste_por_token (según proveedor). Mantener un dashboard con estas métricas por exportación para decisiones operativas.
+
+```mermaid
+flowchart TD
+    A[Define prompt sample] --> B[Measure tokens per record]
+    B --> C[Compute tokens per export]
+    C --> D[Apply provider price -> estimated cost]
+    D --> E[Log to dashboard]
+```
+
+#### Recomendación: ruta híbrida de modelos
+- Empezar con un prototipo usando OpenAI para iterar rápidamente y recolectar métricas (tokens por registro, latencia, calidad).
+- Paralelamente, evaluar modelos pequeños (LLMs) que puedan correrse localmente o en infra controlada y planear fine-tuning para dominios locales. Ventajas: reducción de costes a largo plazo y control sobre datos.
+- Validación: establecer pruebas automáticas que comparen salidas locales vs OpenAI en un conjunto de casos representativos; usar OpenAI como oráculo para validar y calibrar el modelo local antes de cambiar producción.
+
+```mermaid
+graph LR
+    OpenAI[OpenAI / Cloud API]
+    Local[Local LLMs / On-prem]
+    Validator[Validation Suite]
+    Orchestrator[Generation Orchestrator]
+    OpenAI --> Orchestrator
+    Local --> Orchestrator
+    Orchestrator --> Validator
+    Validator --> Dashboard[Quality Dashboard]
 ```
 
 ---
@@ -362,6 +412,9 @@ sequenceDiagram
     A->>T: Actualiza políticas de testing
 ```
 
+### Ejemplo: casos donde Faker no es suficiente
+- Casos regionales y reglas locales: Faker es excelente para datos genéricos, pero puede fallar al replicar reglas regionales o datasets específicos (p. ej., formatos de documentos nacionales, direcciones o nombres con reglas locales). Un ejemplo práctico: una empresa peruana o brasileña que necesita validar su producto con datos que cumplan formatos y valores reales de Perú o Brasil (códigos postales, validaciones de documentos, formatos de teléfono y nombres locales). Este producto demuestra su relevancia cuando la generación debe respetar reglas locales complejas que Faker no cubre por defecto.
+
 ### **7.2 Flujos de Usuario Principales**
 
 #### **7.2.1 Flujo de Creación de Tabla**
@@ -404,9 +457,30 @@ sequenceDiagram
     UI->>U: Usuario descarga archivo generado
 ```
 
+#### **7.2.3 Beneficios para QA y pruebas más realistas**
+- Reduce el tiempo que un QA dedica a definir escenarios: en vez de diseñar manualmente valores válidos o códigos postales, QA puede generar datasets que incluyan valores válidos y edge-cases automáticamente.
+- Genera datos más cercanos a producción (formatos y restricciones locales), reduciendo falsos positivos en pruebas.
+- Ahorro de tiempo en definición de pruebas: integrar generación en pipelines de testing permite crear datos on-demand y reduce la necesidad de diseñar valores manualmente.
+- Reutilización de presets: guardar y compartir plantillas y prompts ayuda a estandarizar escenarios de prueba entre equipos.
+
+```mermaid
+sequenceDiagram
+    QA->>UI: Request dataset (spec + volume)
+    UI->>AIGEN: Generate (Faker + IA)
+    AIGEN->>Validator: Validate formats & constraints
+    Validator->>EX: Export to Excel / S3
+    EX->>QA: Dataset ready
+```
+
 ---
 
 ## **8. Suposiciones y Restricciones**
+
+### Público objetivo estratégico
+- Empresas con necesidades de testing y validación de productos (equipos de QA).
+- Data teams y equipos de producto que necesitan datasets realistas para entrenar y validar modelos.
+- Equipos de cumplimiento y privacidad que buscan alternativos a datos sensibles.
+- Startups y empresas regionales que necesitan datos locales (ej. empresas en Perú o Brasil que requieren formatos/reglas locales).
 
 ### **8.1 Suposiciones del Proyecto**
 
