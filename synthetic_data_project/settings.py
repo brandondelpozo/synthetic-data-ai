@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,10 +78,18 @@ WSGI_APPLICATION = 'synthetic_data_project.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Using SQLite for both development and production
+# Use persistent storage path in production (Dokku mounted volume)
+if os.path.exists('/var/lib/dokku/data/storage/syntheticdata'):
+    # Production with persistent storage
+    DB_PATH = '/var/lib/dokku/data/storage/syntheticdata/db.sqlite3'
+else:
+    # Development
+    DB_PATH = BASE_DIR / 'db.sqlite3'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DB_PATH,
     }
 }
 
