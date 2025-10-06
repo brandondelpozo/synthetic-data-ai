@@ -79,9 +79,9 @@ WSGI_APPLICATION = 'synthetic_data_project.wsgi.application'
 
 # Using SQLite for both development and production
 # Use persistent storage path in production (Dokku mounted volume)
-if os.path.exists('/var/lib/dokku/data/storage/syntheticdata'):
-    # Production with persistent storage
-    DB_PATH = '/var/lib/dokku/data/storage/syntheticdata/db.sqlite3'
+if os.path.exists('/app/data'):
+    # Production with persistent storage (mounted at /app/data inside container)
+    DB_PATH = '/app/data/db.sqlite3'
 else:
     # Development
     DB_PATH = BASE_DIR / 'db.sqlite3'
