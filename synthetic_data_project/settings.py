@@ -159,3 +159,11 @@ CSRF_COOKIE_SECURE = config('DJANGO_CSRF_COOKIE_SECURE', default=False, cast=boo
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://quamtun.com',
+    'https://www.quamtun.com',
+    'http://quamtun.com',
+    'http://www.quamtun.com',
+]
