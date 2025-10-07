@@ -269,10 +269,9 @@ def generate_excel_data(request, table_id):
         
         # Check if this is an HTMX request
         if request.headers.get('HX-Request'):
-            # Return download link for HTMX
-            return render(request, 'data_generator/download_link.html', {
-                'export': export,
-                'download_url': f'/excel-export/{export.id}/download/'
+            # Return progress bar that will start polling
+            return render(request, 'data_generator/progress_start.html', {
+                'export': export
             })
         else:
             # Regular redirect for non-HTMX requests
@@ -296,15 +295,30 @@ def progress_status(request, export_id):
         export = get_object_or_404(DynamicTableExport, pk=export_id)
         progress = export.progress
         
-        return render(request, 'data_generator/progress_bar.html', {
+        response = render(request, 'data_generator/progress_bar.html', {
             'progress': progress,
             'export': export
         })
+        
+        # If export is completed, trigger the 'done' event
+        if export.status == 'completed':
+            response['HX-Trigger'] = 'done'
+        elif export.status == 'failed':
+            response['HX-Trigger'] = 'failed'
+            
+        return response
     except GenerationProgress.DoesNotExist:
         return render(request, 'data_generator/progress_bar.html', {
             'progress': None,
             'export': None
         })
+
+def progress_complete(request, export_id):
+    """HTMX endpoint for when progress is complete"""
+    export = get_object_or_404(DynamicTableExport, pk=export_id)
+    return render(request, 'data_generator/progress_complete.html', {
+        'export': export
+    })
 
 def download_excel(request, export_id):
     """Download generated Excel file"""

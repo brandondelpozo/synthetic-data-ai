@@ -12,5 +12,6 @@ urlpatterns = [
     path('table/<int:table_id>/', views.dynamic_table_detail, name='dynamic_table_detail'),
     path('table/<int:table_id>/generate-excel/', views.generate_excel_data, name='generate_excel_data'),
     path('progress/<int:export_id>/', views.progress_status, name='progress_status'),
+    path('progress/<int:export_id>/complete/', views.progress_complete, name='progress_complete'),
     path('excel-export/<int:export_id>/download/', views.download_excel, name='download_excel'),
 ]

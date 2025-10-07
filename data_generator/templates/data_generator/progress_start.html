@@ -1,0 +1,24 @@
+<div hx-trigger="done" hx-get="{% url 'progress_complete' export.id %}" hx-swap="outerHTML" hx-target="this" data-export-id="{{ export.id }}">
+    <h5 role="status" id="progress-label" tabindex="-1" autofocus>Generating Excel Data</h5>
+    
+    <div
+        hx-get="{% url 'progress_status' export.id %}"
+        hx-trigger="every 600ms"
+        hx-target="this"
+        hx-swap="innerHTML">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted">Starting data generation...</span>
+            <span class="text-muted">0%</span>
+        </div>
+        <div class="progress" style="height: 25px;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="progress-label">
+            <div id="pb" class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width:0%">
+            </div>
+        </div>
+        <div class="mt-2 text-center">
+            <small class="text-muted">
+                <i class="fas fa-spinner fa-spin"></i>
+                Initializing...
+            </small>
+        </div>
+    </div>
+</div>
