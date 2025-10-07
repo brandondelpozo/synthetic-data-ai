@@ -277,7 +277,7 @@ class Migration(migrations.Migration):
             print(f"Unexpected migration error: {error_msg}")
             return False, f"Unexpected error: {error_msg}"
     
-    def generate_synthetic_data(self, table_definition, num_records=100, openai_api_key=None):
+    def generate_synthetic_data(self, table_definition, num_records=5, openai_api_key=None):
         """Generate synthetic data for the dynamic table"""
         table_name = table_definition['table_name']
         fields_definition = table_definition['fields_definition']

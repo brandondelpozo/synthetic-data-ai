@@ -304,7 +304,7 @@ class AIDataGenerator:
             logger.error(f"Error generating AI value for {field_name}: {e}")
             return self._fallback_generation(field_type, field_name)
     
-    def generate_multiple_values(self, field_definitions: List[Dict], num_records: int = 100) -> List[Dict]:
+    def generate_multiple_values(self, field_definitions: List[Dict], num_records: int = 5) -> List[Dict]:
         """Generate multiple records with AI-enhanced data"""
         data = []
         

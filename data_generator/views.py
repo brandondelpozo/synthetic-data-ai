@@ -181,7 +181,7 @@ def generate_excel_data(request, table_id):
         messages.error(request, 'Table has not been migrated yet')
         return redirect('dynamic_table_detail', table_id=table_id)
     
-    num_records = int(request.POST.get('num_records', 100))
+    num_records = int(request.POST.get('num_records', 5))
     openai_api_key = request.POST.get('openai_api_key', '').strip()
     
     # If no API key provided in form, try to get from Django settings (.env file)
