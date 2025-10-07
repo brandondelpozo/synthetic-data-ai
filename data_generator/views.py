@@ -189,8 +189,8 @@ def generate_excel_data(request, table_id):
         from django.conf import settings
         openai_api_key = getattr(settings, 'OPENAI_API_KEY', '')
     
-    if num_records > 10000:
-        messages.error(request, 'Maximum 10,000 records allowed per export')
+    if num_records > 10:
+        messages.error(request, 'Maximum 10 records allowed per export')
         return redirect('dynamic_table_detail', table_id=table_id)
     
     # Create export record
