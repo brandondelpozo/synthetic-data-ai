@@ -163,7 +163,7 @@
         {% if table_def.is_migrated %}
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-file-excel"></i> Generate Excel Data</h5>
+                    <h5><i class="fas fa-file-excel"></i> Generate Excel Data - TEMPLATE UPDATED!</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" action="{% url 'generate_excel_data' table_def.id %}" id="excel-form">
@@ -183,8 +183,10 @@
                                     <strong>API Key Found in .env File!</strong> 
                                     Using OPENAI_API_KEY from backend configuration. You can leave this field empty.
                                 </div>
+                               <!-- 
                                 <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
                                        placeholder="Leave empty to use environment variable (optional override)">
+                                       -->
                             {% else %}
                                 <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" 
                                        placeholder="sk-..." required>
@@ -215,9 +217,14 @@
                 </div>
             </div>
             
-            <!-- HTMX Progress Bar Container (below the Generate Excel Data card) -->
-            <div id="progress-container" class="mt-3" style="display: none;">
+            <!-- HTMX Progress Bar Container (below the Generate Excel Data card) - UPDATED -->
+            <div id="progress-container" class="mt-3">
                 <!-- Progress will be loaded here via HTMX -->
+                <div class="alert alert-info text-center" style="display: none;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>PROGRESS BAR IS NOW VISIBLE!</strong><br>
+                    This will be replaced with the actual progress bar when you click "Generate & Export Excel"
+                </div>
             </div>
         {% else %}
             <div class="card">
@@ -247,7 +254,7 @@
     </div>
 {% endif %}
 {% endblock %}
-
+{% block extra_js %}
 <style>
 /* Smooth progress bar transitions */
 .progress-bar {
@@ -265,8 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
             
-            // Show progress container immediately
-            progressContainer.style.display = 'block';
+            // Disable button and show processing state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
@@ -276,20 +282,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 target: '#progress-container',
                 swap: 'innerHTML'
             });
+            
+            // Fallback: Reset button after 30 seconds if no trigger is received
+            setTimeout(function() {
+                if (submitBtn.disabled) {
+                    console.log('Fallback: Resetting button after timeout');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-magic"></i> Generate & Export Excel';
+                }
+            }, 30000);
         });
         
-        // Listen for the 'done' event to show completion
-        document.body.addEventListener('htmx:trigger', function(event) {
-            if (event.detail.name === 'done') {
-                const exportId = event.detail.elt.dataset.exportId;
-                if (exportId) {
-                    htmx.ajax('GET', `/progress/${exportId}/complete/`, {
-                        target: '#progress-container',
-                        swap: 'innerHTML'
-                    });
+        // Listen for the 'done' and 'failed' events to show completion and reset button
+        progressContainer.addEventListener('htmx:trigger', function(event) {
+            console.log('HTMX trigger received:', event.detail.name);
+            if (event.detail.name === 'done' || event.detail.name === 'failed') {
+                console.log('Resetting button...');
+                // Reset button to original state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-magic"></i> Generate & Export Excel';
+                
+                if (event.detail.name === 'done') {
+                    const exportId = event.detail.elt.dataset.exportId;
+                    if (exportId) {
+                        htmx.ajax('GET', `/progress/${exportId}/complete/`, {
+                            target: '#progress-container',
+                            swap: 'innerHTML'
+                        });
+                    }
                 }
+            }
+        });
+        
+        // Also listen for HTMX completion events
+        progressContainer.addEventListener('htmx:afterRequest', function(event) {
+            console.log('HTMX afterRequest event:', event.detail);
+            // Check if the response contains a download link (indicating completion)
+            if (event.detail.xhr.responseText.includes('Download Excel File')) {
+                console.log('Download link detected, resetting button...');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-magic"></i> Generate & Export Excel';
             }
         });
     }
 });
 </script>
+{% endblock %}
