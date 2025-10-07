@@ -206,23 +206,9 @@
                             </div>
                         </div>
                         
-                        <!-- Progress Bar (hidden by default) -->
+                        <!-- HTMX Progress Bar Container -->
                         <div id="progress-container" class="mb-3" style="display: none;">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted">Generating data...</span>
-                                <span id="progress-text" class="text-muted">0%</span>
-                            </div>
-                            <div class="progress" style="height: 25px;">
-                                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                </div>
-                            </div>
-                            <div class="mt-2 text-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                    This may take a few moments depending on the number of records...
-                                </small>
-                            </div>
+                            <!-- Progress will be loaded here via HTMX -->
                         </div>
 
                         <div class="d-grid">
@@ -267,38 +253,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     const submitBtn = document.getElementById('submit-btn');
     const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
     
     if (form && submitBtn) {
         form.addEventListener('submit', function(e) {
-            // Show progress bar
+            // Show progress container
             progressContainer.style.display = 'block';
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
-            // Simulate progress (since we can't track real progress easily)
-            let progress = 0;
-            const interval = setInterval(function() {
-                progress += Math.random() * 15; // Random increment between 0-15
-                if (progress > 90) progress = 90; // Don't go to 100% until actually done
-                
-                progressBar.style.width = progress + '%';
-                progressBar.setAttribute('aria-valuenow', progress);
-                progressText.textContent = Math.round(progress) + '%';
-                
-                // Update progress bar color based on progress
-                if (progress < 30) {
-                    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
-                } else if (progress < 70) {
-                    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
-                } else {
-                    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
-                }
-            }, 200); // Update every 200ms
+            // Start polling for progress updates
+            let exportId = null;
+            let progressInterval = null;
             
-            // Store interval ID to clear it if needed
-            form.dataset.progressInterval = interval;
+            // Listen for HTMX response to get export ID
+            document.body.addEventListener('htmx:afterRequest', function(event) {
+                if (event.detail.xhr.status === 302) {
+                    // Extract export ID from redirect URL
+                    const redirectUrl = event.detail.xhr.getResponseHeader('Location');
+                    if (redirectUrl && redirectUrl.includes('/excel-export/')) {
+                        exportId = redirectUrl.match(/\/excel-export\/(\d+)\//)[1];
+                        
+                        // Start polling for progress
+                        progressInterval = setInterval(function() {
+                            if (exportId) {
+                                htmx.ajax('GET', `/progress/${exportId}/`, {
+                                    target: '#progress-container',
+                                    swap: 'innerHTML'
+                                });
+                            }
+                        }, 1000); // Poll every second
+                    }
+                }
+            });
+            
+            // Stop polling when progress reaches 100% or fails
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                if (event.detail.target.id === 'progress-container') {
+                    const progressText = event.detail.target.textContent;
+                    if (progressText.includes('100%') || progressText.includes('failed') || progressText.includes('Download Excel File')) {
+                        if (progressInterval) {
+                            clearInterval(progressInterval);
+                        }
+                    }
+                }
+            });
         });
     }
 });

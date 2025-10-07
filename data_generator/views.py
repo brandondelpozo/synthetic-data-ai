@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-from .models import DynamicTableDefinition, DynamicTableExport
+from .models import DynamicTableDefinition, DynamicTableExport, GenerationProgress
 from .dynamic_models import DynamicModelGenerator
 import json
 import random
@@ -200,7 +200,21 @@ def generate_excel_data(request, table_id):
         status='processing'
     )
     
+    # Create progress tracking
+    progress = GenerationProgress.objects.create(
+        export=export,
+        current_step='initializing',
+        progress_percentage=0,
+        message='Starting data generation...'
+    )
+    
     try:
+        # Update progress
+        progress.current_step = 'generating_data'
+        progress.progress_percentage = 20
+        progress.message = 'Generating synthetic data...'
+        progress.save()
+        
         generator = DynamicModelGenerator()
         
         # Generate synthetic data
@@ -211,6 +225,12 @@ def generate_excel_data(request, table_id):
         }
         
         data = generator.generate_synthetic_data(table_definition_data, num_records, openai_api_key)
+        
+        # Update progress
+        progress.current_step = 'creating_excel'
+        progress.progress_percentage = 60
+        progress.message = 'Creating Excel file...'
+        progress.save()
         
         # Create Excel file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -223,9 +243,21 @@ def generate_excel_data(request, table_id):
         
         generator.create_excel_file(table_definition_data, data, output_path)
         
+        # Update progress
+        progress.current_step = 'saving_to_db'
+        progress.progress_percentage = 80
+        progress.message = 'Saving to database...'
+        progress.save()
+        
         # Optionally insert data into database
         if request.POST.get('save_to_db') == 'on':
             generator.insert_data_to_db(table_definition_data, data)
+        
+        # Update progress
+        progress.current_step = 'completed'
+        progress.progress_percentage = 100
+        progress.message = 'Generation completed successfully!'
+        progress.save()
         
         # Update export record
         export.status = 'completed'
@@ -239,11 +271,32 @@ def generate_excel_data(request, table_id):
         return redirect('download_excel', export_id=export.id)
         
     except Exception as e:
+        progress.current_step = 'failed'
+        progress.progress_percentage = 0
+        progress.message = f'Error: {str(e)}'
+        progress.save()
+        
         export.status = 'failed'
         export.error_message = str(e)
         export.save()
         messages.error(request, f'Error generating data: {str(e)}')
         return redirect('dynamic_table_detail', table_id=table_id)
+
+def progress_status(request, export_id):
+    """HTMX endpoint to get progress status"""
+    try:
+        export = get_object_or_404(DynamicTableExport, pk=export_id)
+        progress = export.progress
+        
+        return render(request, 'data_generator/progress_bar.html', {
+            'progress': progress,
+            'export': export
+        })
+    except GenerationProgress.DoesNotExist:
+        return render(request, 'data_generator/progress_bar.html', {
+            'progress': None,
+            'export': None
+        })
 
 def download_excel(request, export_id):
     """Download generated Excel file"""

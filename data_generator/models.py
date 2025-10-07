@@ -43,3 +43,16 @@ class DynamicTableExport(models.Model):
 
     def __str__(self):
         return f"Export #{self.id} - {self.table_definition.display_name} ({self.num_records} records)"
+
+
+class GenerationProgress(models.Model):
+    """Model to track progress of data generation"""
+    export = models.OneToOneField(DynamicTableExport, on_delete=models.CASCADE, related_name='progress')
+    current_step = models.CharField(max_length=50, default='initializing')
+    progress_percentage = models.IntegerField(default=0)
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Progress for Export #{self.export.id} - {self.progress_percentage}%"
