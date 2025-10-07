@@ -267,8 +267,16 @@ def generate_excel_data(request, table_id):
         
         messages.success(request, f'Successfully generated {num_records} records and exported to Excel!')
         
-        # Provide download link
-        return redirect('download_excel', export_id=export.id)
+        # Check if this is an HTMX request
+        if request.headers.get('HX-Request'):
+            # Return download link for HTMX
+            return render(request, 'data_generator/download_link.html', {
+                'export': export,
+                'download_url': f'/excel-export/{export.id}/download/'
+            })
+        else:
+            # Regular redirect for non-HTMX requests
+            return redirect('download_excel', export_id=export.id)
         
     except Exception as e:
         progress.current_step = 'failed'
